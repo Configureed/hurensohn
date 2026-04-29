@@ -782,8 +782,7 @@
           <source src="" type="video/mp4">
           Dein Browser unterstützt das Video-Element nicht.
         </video>
-        <!-- Integrierter Adblocker: Durch das Entfernen von 'allow-popups' und 'allow-top-navigation' aus der Sandbox können eingebettete Player (wie VOE) keine lästigen Werbe-Popups mehr öffnen. -->
-        <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" referrerpolicy="no-referrer" allowfullscreen style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+        <iframe id="iframe-player" referrerpolicy="no-referrer" allowfullscreen style="display: none; width: 100%; height: 100%; border: none;"></iframe>
         <div class="player-error" id="player-error" style="display: none;">
           <i class="ph ph-warning-circle"></i>
           <p>Videodatei nicht gefunden.</p>
@@ -791,9 +790,9 @@
         </div>
       </div>
       
-      <div id="adblock-hint" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 12px 16px; margin-top: 15px; width: 100%; max-width: 1000px; display: flex; align-items: center; gap: 12px;">
-        <i class="ph ph-shield-check" style="font-size: 1.5rem; color: #10b981;"></i>
-        <p style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.4;"><strong>Adblocker aktiv:</strong> Wir haben störende Popups und Weiterleitungen für diesen Player automatisch blockiert. Genieße deinen Stream werbefrei!</p>
+      <div id="adblock-hint" style="display: none; background: rgba(59,130,246,0.1); border: 1px solid var(--blue-1); border-radius: 8px; padding: 12px 16px; margin-top: 15px; width: 100%; max-width: 1000px; display: flex; align-items: center; gap: 12px;">
+        <i class="ph ph-info" style="font-size: 1.5rem; color: var(--blue-2);"></i>
+        <p style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.4;"><strong>Tipp für ein werbefreies Erlebnis:</strong> Da dieser Stream von einem externen Anbieter (VOE) stammt, können Popups leider nicht direkt durch die Website blockiert werden (Fehler: "Sandbox not allowed"). Wir empfehlen die Nutzung der Browser-Erweiterung <strong>uBlock Origin</strong> oder den <strong>Brave Browser</strong>, um Popups beim Klicken auf Play vollständig zu verhindern.</p>
       </div>
       
       <div id="movie-options" style="display: none; width: 100%; max-width: 1000px; text-align: left; margin-top: 10px;">
