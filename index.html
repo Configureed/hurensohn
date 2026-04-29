@@ -794,6 +794,12 @@
         <i class="ph ph-info" style="font-size: 1.5rem; color: var(--blue-2);"></i>
         <p style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.4;"><strong>Tipp für ein werbefreies Erlebnis:</strong> Da dieser Stream von einem externen Anbieter (VOE) stammt, können Popups leider nicht direkt durch die Website blockiert werden (Fehler: "Sandbox not allowed"). Wir empfehlen die Nutzung der Browser-Erweiterung <strong>uBlock Origin</strong> oder den <strong>Brave Browser</strong>, um Popups beim Klicken auf Play vollständig zu verhindern.</p>
       </div>
+
+      <div style="margin-top: 15px; width: 100%; max-width: 1000px; display: flex; justify-content: center;">
+        <button id="instant-play-btn" class="back-btn" style="background: var(--blue-2); color: white; padding: 12px 24px; font-size: 1rem; border-radius: 8px; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; transition: background 0.2s;" onclick="instantPlay()" onmouseover="this.style.background='var(--blue-3)'" onmouseout="this.style.background='var(--blue-2)'">
+          <i class="ph ph-play-circle" style="font-size: 1.3rem;"></i> Instant Play
+        </button>
+      </div>
       
       <div id="movie-options" style="display: none; width: 100%; max-width: 1000px; text-align: left; margin-top: 10px;">
         <h3 style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 12px; font-weight: 500;">Sprache</h3>
@@ -1108,8 +1114,38 @@ function playEpisode(ep, total, showTitle, seasonTitle, seasonIndex) {
     }
     
     videoPlayer.onerror = function() {
-      errorOverlay.style.display = 'flex';
-    };
+    errorOverlay.style.display = 'flex';
+  };
+}
+
+function instantPlay() {
+  const videoPlayer = document.getElementById('video-player');
+  const iframePlayer = document.getElementById('iframe-player');
+  const playerContainer = document.querySelector('.player-container');
+  
+  // Funktion, um in den Vollbildmodus zu wechseln
+  const enterFullscreen = (elem) => {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  };
+
+  if (videoPlayer && videoPlayer.style.display !== 'none') {
+    enterFullscreen(videoPlayer);
+    const playPromise = videoPlayer.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(e => console.log("Fehler beim Instant Play:", e));
+    }
+  } else if (iframePlayer && iframePlayer.style.display !== 'none') {
+    // Da wir das Play-Event im Iframe nicht von außen triggern können,
+    // machen wir das Iframe im Vollbild auf und fokussieren es.
+    // So bleibt der Nutzer visuell "direkt im Video".
+    enterFullscreen(iframePlayer);
+    iframePlayer.focus();
   }
 }
 
