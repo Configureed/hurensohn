@@ -14228,161 +14228,152 @@ $.exports.forwardRef( (e, t) => qd({
     ...e,
     _ref: t
 }));
-const Vg = () => {
+    const Vg = () => {
     const [e,t] = L.useState(!1)
-      , n = [{
-        type: "subMenu",
-        label: "Self Options",
-        categories: [{
+      , n = [
+        {
             label: "Self",
-            tabs: [
-                { type: "button", label: "Revive" },
-                { type: "checkbox", label: "Godmode", checked: false },
-                { type: "slider", label: "Health", value: 100, min: 0, max: 200 },
-                { type: "slider", label: "Armour", value: 100, min: 0, max: 100 }
+            type: "subMenu",
+            categories: [
+                {
+                    label: "Self",
+                    tabs: [
+                        { type: "checkbox", label: "Noclip", checked: false },
+                        { type: "checkbox", label: "Godmode", checked: false },
+                        { type: "button", label: "Revive" },
+                        { type: "button", label: "Suicide" },
+                        { type: "button", label: "Heal" },
+                    ]
+                },
+                { label: "Movement", tabs: [ { type: "button", label: "Fast Run" } ] },
+                { label: "Other", tabs: [ { type: "button", label: "Tiny Ped" } ] }
             ]
-        }]
-    }, {
-        type: "subMenu",
-        label: "Visual Options",
-        categories: [
-            { 
-                label: "Visuals", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Visuals", checked: true },
-                    { type: "checkbox", label: "NPCs", checked: false },
-                    { type: "slider", label: "Distance", value: 400, min: 0, max: 1000, suffix: "m" }
-                ] 
-            },
-            { 
-                label: "Skelton", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Skeleton", checked: false },
-                    { type: "checkbox", label: "Outline", checked: false }
-                ] 
-            },
-            { 
-                label: "Box", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Box", checked: false },
-                    { type: "checkbox", label: "Box Fill", checked: false }
-                ] 
-            }
-        ]
-    }, {
-        type: "subMenu",
-        label: "Combat Options",
-        categories: [
-            { 
-                label: "Aimbot", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Aimbot", checked: false },
-                    { type: "slider", label: "FOV", value: 130, min: 0, max: 180, suffix: "°" }
-                ] 
-            },
-            { 
-                label: "SilentAim", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Silent Aim", checked: false }
-                ] 
-            },
-            { 
-                label: "Ragebot", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Ragebot", checked: false }
-                ] 
-            }
-        ]
-    }, {
-        type: "subMenu",
-        label: "Weapon Options",
-        categories: [
-            { 
-                label: "Weapons", 
-                tabs: [
-                    { type: "button", label: "Give All Weapons" },
-                    { type: "checkbox", label: "Explosive Munition", checked: false },
-                    { type: "button", label: "Remove All Weapons" },
-                    { type: "slider", label: "Rapid Fire", value: 1, min: 1, max: 10, step: 1, suffix: "x" }
-                ] 
-            }
-        ]
-    }, {
-        type: "subMenu",
-        label: "Online Options",
-        categories: [
-            { 
-                label: "List", 
-                tabs: [
-                    { type: "checkbox", label: "Stuntdev - [120m]", checked: false },
-                    { type: "checkbox", label: "Malik - [350m]", checked: false },
-                    { type: "checkbox", label: "Player3 - [500m]", checked: false }
-                ] 
-            },
-            { 
-                label: "Safe", 
-                tabs: [
-                    { type: "button", label: "Explode" },
-                    { type: "button", label: "Teleport to Player" },
-                    { type: "button", label: "Copy Outfit" },
-                    { type: "button", label: "Get ID" },
-                    { type: "button", label: "Open Inventory" }
-                ] 
-            },
-            { 
-                label: "Risk", 
-                tabs: [
-                    { type: "button", label: "Launch Player" },
-                    { type: "checkbox", label: "Bug Player", checked: false },
-                    { type: "button", label: "Crash Player" },
-                    { type: "checkbox", label: "Bluescreen Player", checked: false }
-                ] 
-            }
-        ]
-    }, {
-        type: "subMenu",
-        label: "Misc Options",
-        categories: [
-            { 
-                label: "Misc", 
-                tabs: [
-                    { type: "button", label: "Check Anticheats" },
-                    { type: "button", label: "Lag Server" }
-                ] 
-            },
-            { 
-                label: "Freecam", 
-                tabs: [
-                    { type: "checkbox", label: "Enable Freecam", checked: false },
-                    { type: "slider", label: "Freecam Speed", value: 0.5, min: 0.1, max: 10, step: 0.1, suffix: "x" }
-                ] 
-            }
-        ]
-    }]
-      , rootCategories = [
-          { label: "Main", tabs: n },
-          { 
-            label: "Bypasses", 
+        },
+        {
+            label: "Visual",
+            type: "subMenu",
+            categories: [
+                { label: "Visual", tabs: [ { type: "checkbox", label: "Enable ESP", checked: false } ] },
+                { label: "Skeleton", tabs: [ { type: "checkbox", label: "Enable Skeleton", checked: false } ] },
+                { label: "Box", tabs: [ { type: "checkbox", label: "Enable Box", checked: false } ] }
+            ]
+        },
+        {
+            label: "Combat",
+            type: "subMenu",
+            categories: [
+                { label: "Aimbot", tabs: [ { type: "checkbox", label: "Enable Aimbot", checked: false } ] },
+                {
+                    label: "SilentAim",
+                    tabs: [
+                        { type: "checkbox", label: "Enable", checked: false },
+                        { type: "scrollable", label: "Mode", value: 1, values: [ "Silent", "Magic" ] },
+                        { type: "divider", label: "Settings" },
+                        { type: "scrollable", label: "Aim Bone", value: 1, values: [ "Head", "Chest", "Closest" ] },
+                        { type: "slider", label: "FOV", value: 160, min: 0, max: 180 },
+                        { type: "slider", label: "Distance", value: 480, min: 0, max: 1000 },
+                        { type: "slider", label: "Hit Chance", value: 100, min: 0, max: 100 },
+                        { type: "checkbox", label: "Visible Check", checked: false },
+                    ]
+                },
+                { label: "Triggerbot", tabs: [ { type: "checkbox", label: "Enable Triggerbot", checked: false } ] },
+                { label: "Ragebot", tabs: [ { type: "checkbox", label: "Enable Ragebot", checked: false } ] }
+            ]
+        },
+        {
+            label: "Weapon",
+            type: "subMenu",
             tabs: [
-                { type: "checkbox", label: "Anti Block Control", checked: false },
-                { type: "checkbox", label: "Anti Attach", checked: false },
-                { type: "checkbox", label: "Anti Attack", checked: false },
-                { type: "checkbox", label: "Anti VDM", checked: false },
-                { type: "divider", label: "Admin Protection" },
-                { type: "checkbox", label: "Anti Teleport", checked: false },
-                { type: "checkbox", label: "Anti Freeze", checked: false },
-                { type: "checkbox", label: "Anti Carry", checked: false },
-                { type: "divider", label: "Other" }
-            ] 
-          }
-      ]
-    const [r,o] = L.useState(rootCategories[0].tabs)
+                { type: "button", label: "Give all Weapons" },
+                { type: "button", label: "Remove all Weapons" },
+                { type: "button", label: "Upgrade Weapon" },
+                { type: "button", label: "Refill Ammo" },
+                { type: "checkbox", label: "No Reload", checked: false },
+                { type: "divider", label: "Weapon List" },
+                { label: "Give Weapon", type: "subMenu", tabs: [] }
+            ]
+        },
+        { label: "Vehicle", type: "subMenu", tabs: [ { type: "button", label: "Spawn Vehicle" } ] },
+        {
+            label: "Online",
+            type: "subMenu",
+            categories: [
+                { label: "Players", tabs: [ { type: "button", label: "Refresh List" } ] },
+                {
+                    label: "Safe",
+                    tabs: [
+                        { type: "scrollable", label: "Friend", value: 1, values: [ "Add", "Remove" ] },
+                        { type: "button", label: "Copy Outfit" },
+                        { type: "button", label: "Copy ID" },
+                        { type: "button", label: "Spamm" },
+                        { type: "button", label: "Announce" },
+                        { type: "divider", label: "Fun" },
+                        { type: "button", label: "Ragdoll" },
+                        { type: "button", label: "Knock Out" },
+                        { type: "button", label: "Kill Player" },
+                        { type: "button", label: "Slide Player" },
+                        { type: "scrollable", label: "Launch/Fling", value: 1, values: [ "Launch [NEW]", "Fling" ] },
+                        { type: "scrollable", label: "Smash", value: 1, values: [ "Plane", "Car" ] },
+                    ]
+                },
+                {
+                    label: "Risk",
+                    tabs: [
+                        { type: "button", label: "Lag Car" },
+                        { type: "scrollable", label: "Explode Type", value: 1, values: [ "1", "2", "3", "4" ] },
+                    ]
+                }
+            ]
+        },
+        {
+            label: "Misc",
+            type: "subMenu",
+            categories: [
+                {
+                    label: "Misc",
+                    tabs: [
+                        { type: "checkbox", label: "Poison Attack", checked: false },
+                        { type: "button", label: "RC Car" },
+                        { type: "button", label: "Time & Weather" },
+                        { type: "button", label: "Display & Overlays" },
+                        { type: "button", label: "Freeze Resource" },
+                        { type: "button", label: "Check Anticheats" },
+                        { type: "button", label: "Admin" },
+                    ]
+                },
+                { label: "Freecam", tabs: [ { type: "checkbox", label: "Enable Freecam", checked: false } ] },
+                {
+                    label: "Destroyer",
+                    tabs: [
+                        { type: "checkbox", label: "Kill All", checked: false },
+                        { type: "checkbox", label: "Silent Kill All", checked: false },
+                        { type: "checkbox", label: "Taze All", checked: false },
+                        { type: "checkbox", label: "Ragdoll All", checked: false },
+                        { type: "checkbox", label: "Local Teleport All", checked: false },
+                        { type: "checkbox", label: "Massacre All", checked: false },
+                        { type: "button", label: "Lag Server" },
+                        { type: "divider", label: "Vehicles" },
+                        { type: "button", label: "Kick All Drivers" },
+                    ]
+                },
+                {
+                    label: "Settings",
+                    tabs: [
+                        { type: "button", label: "Open/Close Menu" },
+                        { type: "button", label: "Unload Script" }
+                    ]
+                }
+            ]
+        }
+    ]
+      , rootCategories = n
+    const [r,o] = L.useState(rootCategories[0].categories ? rootCategories[0].categories[0].tabs : rootCategories[0].tabs)
     const [i,l] = L.useState(0)
     const [s,u] = L.useState([])
     const [a,h] = L.useState(rootCategories)
     const [m,d] = L.useState(0)
       , [y,g] = L.useState({
-        link: "https://files.catbox.moe/i5opkq.png",
+        link: "https://files.catbox.moe/1vwcn3.png",
         color: "128, 128, 128"
     })
       , [v,P] = L.useState("0vw")
@@ -14439,7 +14430,7 @@ const Vg = () => {
     const applySettings = (item) => {
         if (item.label === "Menu Color") {
             const colors = {
-                "Red": "255, 0, 0",
+                "Red": "128, 128, 128",
                 "Green": "0, 255, 0",
                 "Purple": "163, 0, 255",
                 "Grey": "128, 128, 128",
@@ -14454,7 +14445,6 @@ const Vg = () => {
             // Updated logic for Banner: Now requires explicit apply via Enter
             const banners = {
                 "Armani": "https://files.catbox.moe/1vwcn3.png",
-                "Fodo": "https://files.catbox.moe/6t6m1o.png",
                 "Redengine": "https://files.catbox.moe/4e8c5l.png",
                 "German": "https://files.catbox.moe/bodlpo.png"
             };
@@ -14861,7 +14851,7 @@ const Vg = () => {
                     children: [x("div", {
                         className: "PBanner",
                         children: x("img", {
-                            src: "https://files.catbox.moe/i5opkq.png",
+                            src: "https://files.catbox.moe/1vwcn3.png",
                             draggable: "false",
                             onLoad: () => setBannerLoaded(true),
                             onError: () => setBannerLoaded(true)
@@ -15494,3 +15484,4 @@ ul.createRoot(Xg).render(x(L.StrictMode, {
   </script>
 </body>
 </html>
+
