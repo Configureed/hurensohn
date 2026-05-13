@@ -1215,14 +1215,14 @@ window.addEventListener("message", (event) => {
 
     // OLD SCROLLABLE POSITION (backup)
     if (data.action === "updatePosition" && data.position) {
-        let x = "50%%";
-        let y = "50%%";
+        let x = "2vw";
+        let y = "50%";
 
-        if (data.position.x === "Left")   x = "50%%";
+        if (data.position.x === "Left")   x = "2vw";
         if (data.position.x === "Center") x = "50%";
         if (data.position.x === "Right")  x = "85%";
 
-        if (data.position.y === "Top")    y = "50%";
+        if (data.position.y === "Top")    y = "15%";
         if (data.position.y === "Middle") y = "50%";
         if (data.position.y === "Bottom") y = "85%";
 
@@ -14884,7 +14884,7 @@ const Vg = () => {
                     className: "PWrapper",
                     style: {
                         ...I,
-                        opacity: bannerLoaded ? (I.opacity || 1) : 0
+                        opacity: I.opacity || 1
                     },
                     children: [x("div", {
                         className: "PBanner",
