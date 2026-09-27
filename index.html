@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skidpaster — FiveM Lua Executor</title>
+  <meta name="description" content="Skidpaster is a FiveM Lua executor. Browse, preview and load menus like Zany and Rynz straight from skidpaster.xyz.">
+  <meta name="theme-color" content="#050505">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050505;
+      --bg-2: #0b0b0b;
+      --panel: #0e0e0e;
+      --panel-2: #141414;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-2: rgba(255, 255, 255, 0.14);
+      --text: #f2f2f2;
+      --muted: #9a9a9a;
+      --dim: #5e5e5e;
+      --white: #ffffff;
+      --ok: #3ddc84;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --wrap: 1360px;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    ::selection { background: #fff; color: #000; }
+    svg.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+    .wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+    /* dotted backdrop */
+    .dots {
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+      background-size: 22px 22px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, #000 30%, transparent 85%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, #000 30%, transparent 85%);
+    }
+
+    /* ---------- TOP BAR ---------- */
+    .topbar { border-bottom: 1px solid transparent; font-size: 13px; color: var(--muted); }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 44px; gap: 16px; }
+    .topbar-left, .topbar-right { display: flex; align-items: center; gap: 22px; }
+    .topbar-item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .topbar-item:hover { color: var(--text); }
+    .pill-btn {
+      display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px;
+      border-radius: 8px; border: 1px solid var(--line-2); color: var(--text); font-size: 13px; font-weight: 500;
+      transition: background .2s, border-color .2s;
+    }
+    .pill-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.25); }
+    .pill-btn.solid { background: #d9d9d9; color: #0a0a0a; border-color: #d9d9d9; }
+    .pill-btn.solid:hover { background: #fff; }
+    @media (max-width: 860px) { .topbar-left .hide-sm { display: none; } }
+    @media (max-width: 560px) { .topbar-left { display: none; } .topbar .wrap { justify-content: flex-end; } }
+
+    /* ---------- NAV ---------- */
+    .nav-shell { position: sticky; top: 0; z-index: 50; padding: 10px 0; transition: padding .25s; }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between; height: 58px;
+      padding: 0 8px; border: 1px solid transparent; border-radius: 14px;
+      transition: background .25s, border-color .25s, padding .25s, backdrop-filter .25s;
+    }
+    .nav-shell.scrolled .nav {
+      background: rgba(10,10,10,0.78); border-color: var(--line); padding: 0 22px;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    .logo { display: inline-flex; align-items: center; gap: 12px; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; }
+    .logo-mark { width: 30px; height: 30px; }
+    .nav-links { display: flex; align-items: center; gap: 34px; font-size: 15px; font-weight: 500; color: #cfcfcf; }
+    .nav-links a { display: inline-flex; align-items: center; gap: 5px; transition: color .2s; }
+    .nav-links a:hover { color: #fff; }
+    .nav-links svg.i { width: 12px; height: 12px; opacity: .6; }
+    .burger { display: none; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line-2); align-items: center; justify-content: center; }
+    .mobile-panel { display: none; }
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .burger { display: inline-flex; }
+      .mobile-panel.open {
+        display: grid; gap: 4px; margin-top: 8px; padding: 10px; border: 1px solid var(--line);
+        border-radius: 14px; background: rgba(10,10,10,0.95);
+      }
+      .mobile-panel a { padding: 12px 14px; border-radius: 10px; color: #d6d6d6; }
+      .mobile-panel a:hover { background: rgba(255,255,255,0.05); }
+    }
+
+    /* ---------- HERO ---------- */
+    .hero { position: relative; padding: 110px 0 80px; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 60px; align-items: center; }
+    .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #bdbdbd; }
+    .hero h1 { margin-top: 18px; font-size: clamp(46px, 7vw, 84px); line-height: 1.02; font-weight: 800; letter-spacing: -0.045em; }
+    .hero h1 .light { display: block; margin-top: 6px; font-weight: 300; color: #bdbdbd; font-size: clamp(34px, 5.2vw, 64px); letter-spacing: -0.03em; }
+    .hero p.lead { margin-top: 26px; max-width: 580px; font-size: 17.5px; line-height: 1.7; color: var(--muted); }
+    .hero-cta { margin-top: 38px; display: flex; flex-wrap: wrap; align-items: center; gap: 26px; }
+    .btn-big {
+      display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 34px; border-radius: 999px;
+      background: #d4d4d4; color: #0a0a0a; font-weight: 600; font-size: 16px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 10px 40px rgba(255,255,255,0.12);
+      transition: background .2s, transform .2s, box-shadow .2s;
+    }
+    .btn-big:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 14px 50px rgba(255,255,255,0.2); }
+    .btn-link { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; color: #dcdcdc; }
+    .btn-link:hover { color: #fff; }
+    .btn-link svg.i { width: 14px; height: 14px; }
+
+    .side-coord {
+      position: absolute; top: 50%; font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+      color: #3c3c3c; text-transform: uppercase; white-space: nowrap; pointer-events: none;
+    }
+    .side-coord.l { left: 18px; transform: translateY(-50%) rotate(-90deg); transform-origin: left center; margin-top: 140px; }
+    .side-coord.r { right: 18px; transform: translateY(-50%) rotate(90deg); transform-origin: right center; margin-top: -140px; }
+    @media (max-width: 1500px) { .side-coord { display: none; } }
+
+    /* executor panel (the "Infrastructure" rack) */
+    .rack-glow { position: absolute; inset: -80px; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06), transparent 60%); pointer-events: none; }
+    .rack { position: relative; border: 1px solid var(--line-2); border-radius: 16px; background: linear-gradient(180deg, #111 0%, #0a0a0a 100%); overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+    .rack-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .rack-head b { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+    .ok-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); display: inline-block; }
+    .rack-head .status { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+    .rack-body { display: grid; grid-template-columns: 8px 1fr 8px; gap: 10px; padding: 12px; }
+    .rail { border-radius: 3px; background: repeating-linear-gradient(180deg, #1c1c1c 0 4px, transparent 4px 12px); }
+    .units { display: grid; gap: 6px; }
+    .unit {
+      position: relative; height: 26px; border: 1px solid var(--line); border-radius: 4px; background: #121212;
+      display: flex; align-items: center; gap: 8px; padding: 0 10px; font-family: var(--mono); font-size: 11px; color: var(--muted);
+    }
+    .unit.hi { border-color: rgba(255,255,255,0.22); background: #161616; color: #fff; }
+    .unit.live::before { content: ""; position: absolute; left: -1px; top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: var(--ok); }
+    .unit .ticks { flex: 1; height: 8px; background: repeating-linear-gradient(90deg, #262626 0 2px, transparent 2px 9px, #262626 9px 10px, transparent 10px 20px); opacity: .9; }
+    .unit .led { width: 5px; height: 5px; border-radius: 50%; background: #333; }
+    .unit.live .led { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .unit .tag { color: #fff; font-weight: 700; }
+    .unit .sub { color: var(--muted); }
+    .unit .end { margin-left: auto; }
+    .unit .bar { flex: 1; height: 3px; border-radius: 3px; background: #1f1f1f; overflow: hidden; }
+    .unit .bar i { display: block; height: 100%; width: 40%; background: #fff; border-radius: 3px; animation: load 2.8s ease-in-out infinite; }
+    .unit .blink { color: #fff; }
+    @keyframes load { 0% { width: 8%; } 60% { width: 78%; } 100% { width: 100%; opacity: 0; } }
+    .rack-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }
+    .rack-stats > div { padding: 16px 10px; text-align: center; }
+    .rack-stats > div + div { border-left: 1px solid var(--line); }
+    .rack-stats b { display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; }
+    .rack-stats b svg.i { width: 13px; height: 13px; color: var(--muted); }
+    .rack-stats span { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+
+    @media (max-width: 1000px) {
+      .hero { padding: 60px 0 50px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 50px; }
+    }
+
+    /* ---------- LOGO STRIP ---------- */
+    .strip { position: relative; padding: 40px 0 70px; overflow: hidden; }
+    .strip-ridge { position: absolute; inset: 0 0 auto 0; height: 120px; pointer-events: none; opacity: .5; }
+    .strip .wrap { position: relative; display: flex; align-items: center; gap: 50px; }
+    .strip-label { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #cfcfcf; line-height: 1.4; flex: none; }
+    .marquee { flex: 1; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+    .marquee-track { display: flex; gap: 64px; width: max-content; animation: marquee 34s linear infinite; }
+    .marquee-track span { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: #3a3a3a; white-space: nowrap; font-family: var(--sans); }
+    .marquee-track span.m { font-family: var(--mono); font-weight: 700; font-size: 22px; }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+    @media (max-width: 700px) { .strip .wrap { flex-direction: column; align-items: flex-start; gap: 20px; } .marquee { width: 100%; } }
+
+    /* ---------- SECTIONS ---------- */
+    section.block { padding: 90px 0; }
+    .sec-head { max-width: 760px; }
+    .sec-kicker { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #cfcfcf; }
+    .sec-kicker .n { font-family: var(--mono); font-weight: 500; letter-spacing: 0; color: var(--dim); }
+    .sec-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-2), transparent); margin-left: 8px; min-width: 60px; }
+    .sec-head h2 { margin-top: 18px; font-size: clamp(30px, 4vw, 42px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; }
+    .sec-head p { margin-top: 14px; color: var(--muted); font-size: 16.5px; max-width: 640px; }
+    .alt { background: linear-gradient(180deg, transparent, #080808 12%, #080808 88%, transparent); }
+
+    .card { border: 1px solid var(--line); border-radius: var(--radius); background: rgba(12,12,12,0.85); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+    .card-title { display: inline-flex; align-items: center; gap: 12px; font-weight: 600; font-size: 15px; }
+    .ic-box { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line-2); display: inline-flex; align-items: center; justify-content: center; background: #121212; flex: none; }
+    .mono-note { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 999px;
+      border: 1px solid rgba(61,220,132,0.35); background: rgba(61,220,132,0.08); color: var(--ok); font-size: 12px; font-weight: 700;
+    }
+    .badge .ok-dot { width: 5px; height: 5px; }
+
+    /* ---------- MENUS ---------- */
+    .tabs { margin-top: 40px; display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: #0a0a0a; }
+    .tab {
+      display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border-radius: 9px;
+      font-size: 14px; font-weight: 600; color: var(--muted); transition: color .2s, background .2s;
+    }
+    .tab:hover { color: #fff; }
+    .tab[aria-selected="true"] { background: #e6e6e6; color: #0a0a0a; }
+    .tab .cnt { font-family: var(--mono); font-size: 11px; opacity: .6; }
+
+    .menu-grid { margin-top: 22px; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; }
+    @media (max-width: 1050px) { .menu-grid { grid-template-columns: 1fr; } }
+
+    .preview { position: relative; overflow: hidden; }
+    .screen {
+      position: relative; height: 560px; overflow: hidden; border-radius: 0 0 var(--radius) var(--radius);
+      background:
+        radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.05), transparent 60%),
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+        #070707;
+      background-size: auto, 40px 40px, 40px 40px, auto;
+    }
+    .screen iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; color-scheme: normal; }
+    .screen .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+    .spinner { width: 14px; height: 14px; border: 2px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .screen.ready .loading { display: none; }
+    .control-hint {
+      position: absolute; right: 14px; bottom: 14px; z-index: 3; display: inline-flex; align-items: center; gap: 8px;
+      height: 34px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--line-2); background: rgba(10,10,10,0.9);
+      font-size: 12.5px; font-weight: 600; color: #e6e6e6; backdrop-filter: blur(6px); transition: background .2s, border-color .2s;
+    }
+    .control-hint:hover { background: #1a1a1a; border-color: rgba(255,255,255,0.3); }
+    .screen.active { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
+    .screen.active .control-hint { background: #e6e6e6; color: #0a0a0a; border-color: #e6e6e6; }
+    .keys { display: flex; flex-wrap: wrap; gap: 14px; padding: 14px 22px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+    .keys span { display: inline-flex; align-items: center; gap: 6px; }
+    kbd { font-family: var(--mono); font-size: 11px; min-width: 22px; height: 22px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 5px; color: #e6e6e6; background: #121212; }
+    @media (max-width: 700px) { .screen { height: 480px; } }
+
+    .details { display: flex; flex-direction: column; }
+    .details .rows { padding: 6px 22px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; font-size: 14px; }
+    .row + .row { border-top: 1px solid var(--line); }
+    .row .k { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); }
+    .row .v { font-weight: 600; text-align: right; }
+    .row .v.mono { font-family: var(--mono); font-weight: 500; font-size: 12.5px; }
+    .endpoints { padding: 4px 22px 22px; display: grid; gap: 10px; margin-top: auto; }
+    .endpoint {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; background: #0a0a0a;
+      transition: border-color .2s, background .2s;
+    }
+    .endpoint:hover { border-color: rgba(255,255,255,0.22); background: #101010; }
+    .endpoint .meta { min-width: 0; flex: 1; }
+    .endpoint .meta b { display: block; font-size: 13.5px; font-weight: 600; }
+    .endpoint .meta code { display: block; font-family: var(--mono); font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .endpoint .acts { display: flex; gap: 6px; flex: none; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line-2); display: inline-flex; align-items: center; justify-content: center; color: #ddd; transition: background .2s, color .2s; }
+    .icon-btn:hover { background: #fff; color: #000; }
+    .icon-btn.done { background: var(--ok); border-color: var(--ok); color: #000; }
+
+    /* ---------- FEATURES ---------- */
+    .feat-grid { margin-top: 48px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .feat { display: flex; align-items: center; gap: 16px; padding: 22px; }
+    .feat b { display: block; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .feat span { display: block; font-size: 13px; color: var(--muted); }
+    @media (max-width: 1100px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .feat-grid { grid-template-columns: 1fr; } }
+
+    .how-grid { margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .how { padding: 26px; }
+    .how .step { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+    .how h3 { margin-top: 14px; font-size: 18px; letter-spacing: -0.02em; }
+    .how p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .how pre { margin-top: 16px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: #080808; font-family: var(--mono); font-size: 12px; color: #d8d8d8; overflow-x: auto; }
+    @media (max-width: 900px) { .how-grid { grid-template-columns: 1fr; } }
+
+    /* ---------- STATUS ---------- */
+    .status-list { margin-top: 44px; }
+    .status-list .row { padding: 18px 22px; }
+    .status-list .row + .row { border-top: 1px solid var(--line); }
+    .status-list .name { display: flex; align-items: center; gap: 14px; font-weight: 600; }
+    .status-list .name small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+
+    /* ---------- FAQ ---------- */
+    .faq { margin-top: 44px; display: grid; gap: 12px; }
+    .faq details { border: 1px solid var(--line); border-radius: 12px; background: rgba(12,12,12,0.85); }
+    .faq summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; font-weight: 600; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary svg.i { transition: transform .2s; color: var(--muted); }
+    .faq details[open] summary svg.i { transform: rotate(45deg); }
+    .faq details p { padding: 0 22px 20px; color: var(--muted); font-size: 14.5px; }
+    .faq code { font-family: var(--mono); font-size: 12.5px; color: #e6e6e6; background: #151515; border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; }
+
+    /* ---------- FOOTER ---------- */
+    footer { margin-top: 60px; border-top: 1px solid var(--line); padding: 50px 0 40px; }
+    .foot { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 40px; }
+    .foot p { margin-top: 14px; color: var(--muted); font-size: 14px; max-width: 320px; }
+    .foot h5 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #cfcfcf; margin-bottom: 14px; }
+    .foot a { display: block; color: var(--muted); font-size: 14px; padding: 4px 0; }
+    .foot a:hover { color: #fff; }
+    .foot-bottom { margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--dim); font-family: var(--mono); }
+    @media (max-width: 800px) { .foot { grid-template-columns: 1fr 1fr; } }
+
+    /* reveal */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .marquee-track, .unit .bar i { animation: none; }
+      html { scroll-behavior: auto; }
+    }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 26px; z-index: 100; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; background: #f2f2f2; color: #0a0a0a;
+      font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: opacity .25s, transform .25s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+  <div class="dots" aria-hidden="true"></div>
+
+  <!-- SVG icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M12 14l4-4"/><path d="M3.5 18a9 9 0 1 1 17 0"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-head" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-5-6-5M12 19h8"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  </svg>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="wrap">
+      <div class="topbar-left">
+        <span class="topbar-item"><svg class="i"><use href="#i-clock"/></svg> 24/7 menu hosting</span>
+        <a class="topbar-item" href="#menus"><svg class="i"><use href="#i-code"/></svg> Raw Lua endpoints</a>
+        <a class="topbar-item hide-sm" href="#status"><svg class="i"><use href="#i-send"/></svg> All menus operational</a>
+      </div>
+      <div class="topbar-right">
+        <a class="pill-btn solid" href="#menus">Menus</a>
+        <a class="pill-btn" href="#how">Get started</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-shell" id="navShell">
+    <div class="wrap">
+      <nav class="nav" aria-label="Main">
+        <a class="logo" href="./" aria-label="Skidpaster home">
+          <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M3 24 10 9l5 9 3-5 6 11z" fill="#8a8a8a"/>
+            <path d="M12 24 19 9l10 15z" fill="#fff"/>
+          </svg>
+          Skidpaster
+        </a>
+        <div class="nav-links">
+          <a href="#executor">Executor</a>
+          <a href="#menus">Menus <svg class="i"><use href="#i-chev"/></svg></a>
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#status">Status</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+      </nav>
+      <div class="mobile-panel" id="mobilePanel">
+        <a href="#executor">Executor</a>
+        <a href="#menus">Menus</a>
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#status">Status</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero" id="executor">
+    <span class="side-coord l">FiveM · Lua 5.4 — CEF / DUI runtime</span>
+    <span class="side-coord r">skidpaster.xyz — menus · raw lua</span>
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow reveal">FiveM Lua Executor · Menu Hub</div>
+        <h1 class="reveal">Skidpaster<span class="light">FiveM Lua Executor</span></h1>
+        <p class="lead reveal">Skidpaster is a FiveM Lua executor with a hosted menu library — full DUI menus with Aimbot, ESP, Vehicle, Self and Freecam tabs, served straight from <b style="color:#ddd;font-weight:600">skidpaster.xyz</b>. Preview every menu live in your browser, read the raw Lua and load it in one line.</p>
+        <div class="hero-cta reveal">
+          <a class="btn-big" href="#menus">View All Menus <svg class="i"><use href="#i-arrow"/></svg></a>
+          <a class="btn-link" href="Zany/menu.lua" target="_blank" rel="noopener">View Zany source <svg class="i"><use href="#i-ext"/></svg></a>
+        </div>
+      </div>
+
+      <div class="reveal" style="position:relative">
+        <div class="rack-glow" aria-hidden="true"></div>
+        <div class="rack">
+          <div class="rack-head">
+            <b><svg class="i"><use href="#i-cpu"/></svg> Executor</b>
+            <span class="status"><span class="ok-dot"></span> All systems operational</span>
+          </div>
+          <div class="rack-body">
+            <div class="rail"></div>
+            <div class="units">
+              <div class="unit hi"><svg class="i" style="width:12px;height:12px"><use href="#i-terminal"/></svg><span class="tag">LUA EXECUTOR</span><span class="end tag">v2 · x64</span></div>
+              <div class="unit"><span class="ticks"></span><span class="led"></span></div>
+              <div class="unit live"><span class="led"></span><span class="ticks"></span><span class="tag">ZANY</span><span class="sub">/Zany/menu.lua</span></div>
+              <div class="unit"><span class="ticks"></span><span class="led"></span></div>
+              <div class="unit live"><span class="led"></span><span class="ticks"></span><span class="tag">RYNZ</span><span class="sub">/Rynz/menu.lua</span></div>
+              <div class="unit"><span class="led"></span><span class="bar"><i></i></span><span class="blink">Injecting</span></div>
+              <div class="unit"><span class="ticks"></span><span class="led"></span></div>
+              <div class="unit"><span class="ticks" style="opacity:.4"></span></div>
+            </div>
+            <div class="rail"></div>
+          </div>
+          <div class="rack-stats">
+            <div><b><svg class="i"><use href="#i-box"/></svg> <span id="menuCount">2</span></b><span>Hosted menus</span></div>
+            <div><b><svg class="i"><use href="#i-head"/></svg> 24/7</b><span>Online</span></div>
+            <div><b><svg class="i"><use href="#i-shield"/></svg> Raw</b><span>Lua endpoints</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- STRIP -->
+  <div class="strip">
+    <svg class="strip-ridge" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 110 L220 70 L420 95 L640 30 L820 80 L1000 40 L1180 90 L1440 60" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+    </svg>
+    <div class="wrap">
+      <div class="strip-label">Built for<br>FiveM runtime</div>
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+          <span>FiveM</span><span class="m">Lua 5.4</span><span>CitizenFX</span><span class="m">DUI</span><span>Chromium CEF</span><span class="m">NUI</span><span>Natives</span><span class="m">X3 API</span>
+          <span>FiveM</span><span class="m">Lua 5.4</span><span>CitizenFX</span><span class="m">DUI</span><span>Chromium CEF</span><span class="m">NUI</span><span>Natives</span><span class="m">X3 API</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENUS -->
+  <section class="block" id="menus">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-kicker"><span class="n">01</span> Menus</div>
+        <h2>Every menu, live in your browser</h2>
+        <p>Pick a menu to preview its real UI. Each menu is available as a rendered page at <code class="mono-note" style="color:#ddd">/&lt;Menu&gt;/menu.html</code> and as raw Lua at <code class="mono-note" style="color:#ddd">/&lt;Menu&gt;/menu.lua</code>.</p>
+      </div>
+
+      <div class="tabs reveal" role="tablist" id="tabs" aria-label="Menus"></div>
+
+      <div class="menu-grid reveal" id="menuPanel" role="tabpanel">
+        <div class="card preview">
+          <div class="card-head">
+            <span class="card-title"><span class="ic-box"><svg class="i"><use href="#i-eye"/></svg></span> <span><span id="pvName">Zany</span> — live preview</span></span>
+            <span class="mono-note" id="pvPath">/Zany/menu.html</span>
+          </div>
+          <div class="screen" id="screen">
+            <div class="loading"><span class="spinner"></span> loading menu…</div>
+            <button class="control-hint" id="controlBtn" type="button"><svg class="i"><use href="#i-mouse"/></svg> <span>Click to control</span></button>
+          </div>
+          <div class="keys">
+            <span><kbd>Key</kbd>+<kbd>Enter</kbd> Set menu bind</span>
+            <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+            <span><kbd>←</kbd><kbd>→</kbd> Change value</span>
+            <span><kbd>Q</kbd><kbd>E</kbd> Switch tab</span>
+            <span><kbd>Enter</kbd> Select</span>
+            <span><kbd>⌫</kbd> Back</span>
+            <span><kbd>Esc</kbd> Release</span>
+          </div>
+        </div>
+
+        <div class="card details">
+          <div class="card-head">
+            <span class="card-title"><span class="ic-box"><svg class="i"><use href="#i-layers"/></svg></span> <span id="dtName">Zany</span></span>
+            <span class="badge"><span class="ok-dot"></span> ONLINE</span>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="k"><svg class="i"><use href="#i-box"/></svg> Type</span><span class="v">Full DUI menu</span></div>
+            <div class="row"><span class="k"><svg class="i"><use href="#i-layers"/></svg> Tabs</span><span class="v" id="dtTabs">Combat · Visual · Self · Vehicle</span></div>
+            <div class="row"><span class="k"><svg class="i"><use href="#i-terminal"/></svg> Runtime</span><span class="v">FiveM Lua + X3 API</span></div>
+            <div class="row"><span class="k"><svg class="i"><use href="#i-file"/></svg> Size</span><span class="v mono" id="dtSize">—</span></div>
+          </div>
+          <div class="endpoints" id="endpoints"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="block alt" id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-kicker"><span class="n">02</span> Features</div>
+        <h2>One executor, one clean menu stack</h2>
+        <p>Menus ship as a single Lua file with the UI embedded — no extra resources, no setup.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="card feat reveal"><span class="ic-box"><svg class="i"><use href="#i-zap"/></svg></span><div><b>Instant execute</b><span>Run Lua in real time</span></div></div>
+        <div class="card feat reveal"><span class="ic-box"><svg class="i"><use href="#i-layers"/></svg></span><div><b>Single-file menus</b><span>HTML UI embedded in Lua</span></div></div>
+        <div class="card feat reveal"><span class="ic-box"><svg class="i"><use href="#i-eye"/></svg></span><div><b>Live preview</b><span>Test every menu in-browser</span></div></div>
+        <div class="card feat reveal"><span class="ic-box"><svg class="i"><use href="#i-code"/></svg></span><div><b>Raw endpoints</b><span>Plain-text Lua, always fresh</span></div></div>
+      </div>
+
+      <div class="how-grid" id="how">
+        <div class="card how reveal">
+          <div class="step">STEP 01</div>
+          <h3>Pick a menu</h3>
+          <p>Browse the menu library above and try the UI in the live preview.</p>
+          <pre>skidpaster.xyz/Zany/menu.html</pre>
+        </div>
+        <div class="card how reveal">
+          <div class="step">STEP 02</div>
+          <h3>Grab the Lua</h3>
+          <p>Open the raw endpoint and copy the source, or copy the URL directly.</p>
+          <pre>skidpaster.xyz/Zany/menu.lua</pre>
+        </div>
+        <div class="card how reveal">
+          <div class="step">STEP 03</div>
+          <h3>Execute</h3>
+          <p>Paste it into the executor while connected to a server and open the menu with your bind.</p>
+          <pre>-- paste menu.lua &amp; run</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <section class="block" id="status">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-kicker"><span class="n">03</span> Status</div>
+        <h2>Everything is up</h2>
+        <p>Current state of the executor and all hosted menus.</p>
+      </div>
+      <div class="card status-list reveal" id="statusList">
+        <div class="row">
+          <span class="name"><span class="ic-box"><svg class="i"><use href="#i-cpu"/></svg></span><span>Lua Executor<small>Core runtime</small></span></span>
+          <span class="badge"><span class="ok-dot"></span> OPERATIONAL</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block alt" id="faq">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-kicker"><span class="n">04</span> FAQ</div>
+        <h2>Questions</h2>
+      </div>
+      <div class="faq">
+        <details class="reveal"><summary>What is the difference between menu.html and menu.lua? <svg class="i"><use href="#i-plus"/></svg></summary><p><code>menu.html</code> is the menu UI rendered as a web page — the same interface you see in game. <code>menu.lua</code> is the full script you execute; it already contains the UI, so it is the only file you need.</p></details>
+        <details class="reveal"><summary>Why is the menu background transparent? <svg class="i"><use href="#i-plus"/></svg></summary><p>The menu is built as an in-game overlay, so its page has no background of its own. The live preview on this site places it on a dark backdrop.</p></details>
+        <details class="reveal"><summary>How do I control the live preview? <svg class="i"><use href="#i-plus"/></svg></summary><p>Click <b>Click to control</b> on the preview, then use the arrow keys, <code>Q</code>/<code>E</code>, <code>Enter</code> and <code>Backspace</code> just like in game. Press <code>Esc</code> to release the keyboard. Game actions do nothing in the browser — the preview is only the UI.</p></details>
+        <details class="reveal"><summary>Where do new menus appear? <svg class="i"><use href="#i-plus"/></svg></summary><p>Every menu lives in its own folder, e.g. <code>/Zany/</code> — as soon as a folder is added and listed, it shows up here with its own preview and raw link.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot">
+        <div>
+          <a class="logo" href="./">
+            <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 24 10 9l5 9 3-5 6 11z" fill="#8a8a8a"/><path d="M12 24 19 9l10 15z" fill="#fff"/></svg>
+            Skidpaster
+          </a>
+          <p>FiveM Lua executor and hosted menu library. Preview, read and load menus from one place.</p>
+        </div>
+        <div>
+          <h5>Menus</h5>
+          <div id="footMenus"></div>
+        </div>
+        <div>
+          <h5>Raw Lua</h5>
+          <div id="footRaw"></div>
+        </div>
+        <div>
+          <h5>Site</h5>
+          <a href="#executor">Executor</a>
+          <a href="#features">Features</a>
+          <a href="#status">Status</a>
+          <a href="#faq">FAQ</a>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© <span id="year">2026</span> skidpaster.xyz</span>
+        <span>black &amp; white · built for FiveM</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><svg class="i"><use href="#i-check"/></svg> <span>Copied</span></div>
+
+  <script>
+    // ------------------------------------------------------------------
+    // Menu registry — add a folder (e.g. /NewMenu/menu.html + menu.lua)
+    // and one entry here, and it appears everywhere on the page.
+    // ------------------------------------------------------------------
+    const MENUS = [
+      { id: 'Zany', tabs: 'Combat · Visual · Self · Vehicle · Misc' },
+      { id: 'Rynz', tabs: 'Combat · Visual · Self · Vehicle · Misc' }
+    ];
+
+    const $ = (s, r = document) => r.querySelector(s);
+    // Relative paths work on skidpaster.xyz and on user.github.io/<repo>/ alike.
+    const IS_WEB = /^https?:$/.test(location.protocol);
+    const BASE = IS_WEB ? new URL('.', location.href) : new URL('https://skidpaster.xyz/');
+    const abs = p => new URL(p, BASE).href;
+    const pretty = p => abs(p).replace(/^https?:\/\//, '');
+    const icon = id => `<svg class="i"><use href="#${id}"/></svg>`;
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById('menuCount').textContent = MENUS.length;
+
+    // nav
+    const navShell = $('#navShell');
+    const onScroll = () => navShell.classList.toggle('scrolled', scrollY > 40);
+    addEventListener('scroll', onScroll, { passive: true }); onScroll();
+    const burger = $('#burger'), mobilePanel = $('#mobilePanel');
+    burger.addEventListener('click', () => {
+      const open = mobilePanel.classList.toggle('open');
+      burger.setAttribute('aria-expanded', open);
+    });
+    mobilePanel.addEventListener('click', e => { if (e.target.tagName === 'A') { mobilePanel.classList.remove('open'); burger.setAttribute('aria-expanded', false); } });
+
+    // reveal
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 }) : null;
+    document.querySelectorAll('.reveal').forEach(el => io ? io.observe(el) : el.classList.add('in'));
+
+    // toast + copy
+    const toast = $('#toast');
+    let toastT;
+    function showToast(msg) {
+      toast.querySelector('span').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+    async function copyText(text) {
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch (_) {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+        ta.remove(); return ok;
+      }
+    }
+    async function flashCopy(btn, text, msg) {
+      const ok = await copyText(text);
+      showToast(ok ? msg : 'Copy failed');
+      if (!ok) return;
+      btn.classList.add('done'); btn.innerHTML = icon('i-check');
+      setTimeout(() => { btn.classList.remove('done'); btn.innerHTML = icon('i-copy'); }, 1400);
+    }
+
+    // file size lookup (HEAD request, static-host friendly)
+    const sizeCache = {};
+    async function fileSize(path) {
+      if (path in sizeCache) return sizeCache[path];
+      try {
+        const r = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+        const n = Number(r.headers.get('content-length'));
+        sizeCache[path] = r.ok && n ? (n / 1048576).toFixed(2) + ' MB' : null;
+      } catch (_) { sizeCache[path] = null; }
+      return sizeCache[path];
+    }
+
+    // footer + status lists
+    $('#footMenus').innerHTML = MENUS.map(m => `<a href="${m.id}/menu.html" target="_blank" rel="noopener">${m.id}</a>`).join('');
+    $('#footRaw').innerHTML = MENUS.map(m => `<a href="${m.id}/menu.lua" target="_blank" rel="noopener">${m.id}/menu.lua</a>`).join('');
+    $('#statusList').insertAdjacentHTML('beforeend', MENUS.map(m => `
+      <div class="row">
+        <span class="name"><span class="ic-box">${icon('i-layers')}</span><span>${m.id} Menu<small>/${m.id}/menu.lua</small></span></span>
+        <span class="badge"><span class="ok-dot"></span> ONLINE</span>
+      </div>`).join(''));
+
+    // ------------------------------------------------------------------
+    // Menu tabs + live preview
+    // ------------------------------------------------------------------
+    const tabsEl = $('#tabs'), screen = $('#screen'), controlBtn = $('#controlBtn');
+    let current = null, frame = null, controlling = false;
+
+    tabsEl.innerHTML = MENUS.map((m, i) =>
+      `<button class="tab" role="tab" id="tab-${m.id}" aria-selected="false" data-id="${m.id}">${m.id} <span class="cnt">0${i + 1}</span></button>`
+    ).join('');
+    tabsEl.addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) selectMenu(b.dataset.id, true); });
+    tabsEl.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const i = MENUS.findIndex(m => m.id === current);
+      const next = MENUS[(i + (e.key === 'ArrowRight' ? 1 : -1) + MENUS.length) % MENUS.length];
+      selectMenu(next.id, true); $('#tab-' + next.id).focus();
+    });
+
+    function setControl(on) {
+      controlling = on && !!frame;
+      screen.classList.toggle('active', controlling);
+      controlBtn.querySelector('span').textContent = controlling ? 'Controlling — Esc to release' : 'Click to control';
+      if (controlling) { try { frame.contentWindow.focus(); } catch (_) {} }
+    }
+    controlBtn.addEventListener('click', () => setControl(!controlling));
+    screen.addEventListener('click', e => { if (e.target === screen) setControl(true); });
+    document.addEventListener('click', e => { if (controlling && !screen.contains(e.target)) setControl(false); });
+
+    // Forward keys to the menu (it listens for {type:'saily_key'} messages).
+    // Every key goes through (the startup keybind picker accepts any key);
+    // Esc releases control, Tab / modifiers / F-keys stay with the page.
+    const SKIP = /^(Tab|Shift|Control|Alt|Meta|CapsLock|F\d{1,2})$/;
+    document.addEventListener('keydown', e => {
+      if (!controlling) return;
+      if (e.key === 'Escape') { setControl(false); return; }
+      if (SKIP.test(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+      e.preventDefault();
+      try { frame.contentWindow.postMessage({ type: 'saily_key', key: e.key }, '*'); } catch (_) {}
+    });
+
+    function wireFrame(f) {
+      f.addEventListener('load', () => {
+        screen.classList.add('ready');
+        try {
+          const w = f.contentWindow;
+          // Keys pressed while the iframe itself has focus: Esc releases control.
+          w.addEventListener('keydown', ev => { if (ev.key === 'Escape') { setControl(false); window.focus(); } }, true);
+        } catch (_) {}
+      });
+    }
+
+    async function selectMenu(id, userAction) {
+      if (id === current) return;
+      current = id;
+      const m = MENUS.find(x => x.id === id);
+      setControl(false);
+
+      tabsEl.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.id === id));
+      $('#menuPanel').setAttribute('aria-labelledby', 'tab-' + id);
+      $('#pvName').textContent = id;
+      $('#dtName').textContent = id + ' Menu';
+      $('#pvPath').textContent = `/${id}/menu.html`;
+      $('#dtTabs').textContent = m.tabs;
+
+      // (re)build the preview frame lazily — the menus are several MB each
+      if (frame) frame.remove();
+      screen.classList.remove('ready');
+      frame = document.createElement('iframe');
+      frame.title = id + ' menu preview';
+      frame.setAttribute('allowtransparency', 'true');
+      wireFrame(frame);
+      frame.src = `${id}/menu.html`;
+      screen.insertBefore(frame, controlBtn);
+
+      const htmlUrl = abs(`${id}/menu.html`), luaUrl = abs(`${id}/menu.lua`);
+      $('#endpoints').innerHTML = `
+        <div class="endpoint">
+          <span class="ic-box">${icon('i-eye')}</span>
+          <div class="meta"><b>Rendered menu</b><code>${pretty(`${id}/menu.html`)}</code></div>
+          <div class="acts">
+            <button class="icon-btn" data-copy="${htmlUrl}" title="Copy URL" aria-label="Copy menu.html URL">${icon('i-copy')}</button>
+            <a class="icon-btn" href="${id}/menu.html" target="_blank" rel="noopener" title="Open" aria-label="Open menu.html">${icon('i-ext')}</a>
+          </div>
+        </div>
+        <div class="endpoint">
+          <span class="ic-box">${icon('i-code')}</span>
+          <div class="meta"><b>Raw Lua source</b><code>${pretty(`${id}/menu.lua`)}</code></div>
+          <div class="acts">
+            <button class="icon-btn" data-copy="${luaUrl}" title="Copy URL" aria-label="Copy menu.lua URL">${icon('i-copy')}</button>
+            <a class="icon-btn" href="${id}/menu.lua" target="_blank" rel="noopener" title="Open" aria-label="Open menu.lua">${icon('i-ext')}</a>
+          </div>
+        </div>
+        <a class="btn-big" style="justify-content:center;height:48px;margin-top:6px" href="${id}/menu.lua" target="_blank" rel="noopener">View ${id} Lua ${icon('i-arrow')}</a>`;
+
+      if (userAction) { try { history.replaceState(null, '', '#' + id); } catch (_) {} }
+
+      $('#dtSize').textContent = '…';
+      const size = await fileSize(`${id}/menu.lua`);
+      if (current === id) $('#dtSize').textContent = size ? size + ' (lua)' : '—';
+    }
+
+    $('#endpoints').addEventListener('click', e => {
+      const b = e.target.closest('[data-copy]');
+      if (b) flashCopy(b, b.dataset.copy, 'URL copied');
+    });
+
+    // deep links: skidpaster.xyz/#Rynz opens that tab
+    const fromHash = decodeURIComponent(location.hash.slice(1));
+    const start = MENUS.find(m => m.id.toLowerCase() === fromHash.toLowerCase());
+    // Only load the (large) preview once the section is near the viewport.
+    const initial = (start || MENUS[0]).id;
+    if (start) { selectMenu(initial); setTimeout(() => $('#menus').scrollIntoView(), 0); }
+    else if ('IntersectionObserver' in window) {
+      const lazy = new IntersectionObserver(es => {
+        if (es.some(e => e.isIntersecting)) { lazy.disconnect(); selectMenu(initial); }
+      }, { rootMargin: '600px 0px' });
+      lazy.observe($('#menus'));
+      // still set up labels immediately
+      tabsEl.querySelector('.tab').setAttribute('aria-selected', 'true');
+    } else selectMenu(initial);
+  </script>
+</body>
+</html>
